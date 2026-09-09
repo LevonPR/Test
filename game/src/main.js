@@ -1,7 +1,7 @@
 import "./style.css";
 import { pipeline } from "@huggingface/transformers";
 
-const MODEL_ID = "Xenova/emotion-english-distilroberta-base";
+const MODEL_ID = "onnx-community/emotion-english-distilroberta-base-ONNX";
 const ROUNDS = 6;
 const PASS_SCORE = 0.45;
 

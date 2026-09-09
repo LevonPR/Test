@@ -10,7 +10,7 @@ npm install
 npm run dev
 ```
 
-Open the printed local URL. The first run downloads [`Xenova/emotion-english-distilroberta-base`](https://huggingface.co/Xenova/emotion-english-distilroberta-base).
+Open the printed local URL. The first run downloads [`onnx-community/emotion-english-distilroberta-base-ONNX`](https://huggingface.co/onnx-community/emotion-english-distilroberta-base-ONNX).
 
 ## Hugging Face skills
 
