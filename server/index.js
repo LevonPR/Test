@@ -69,8 +69,6 @@ const app = express();
 app.use(express.json({ limit: '256kb' }));
 app.use(express.static(PUBLIC_DIR));
 
-const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
-
 app.get('/api/providers', (_req, res) => res.json(listProviders()));
 app.get('/api/presets', (_req, res) => res.json({ personas: PERSONA_PRESETS, topics: TOPIC_SUGGESTIONS }));
 
@@ -138,12 +136,12 @@ app.post('/api/rooms/:id/pause', (req, res) => {
   res.json(room.toJSON());
 });
 
-app.post('/api/rooms/:id/step', wrap(async (req, res) => {
+app.post('/api/rooms/:id/step', (req, res) => {
   const room = getRoomOr404(req.params.id);
-  // Fire and forget: the turn streams over the websocket.
+  // Validation throws synchronously; the turn itself streams over the websocket.
   room.step().catch((err) => console.error(`[room ${room.id}] step failed:`, err.message));
   res.json(room.toJSON());
-}));
+});
 
 app.post('/api/rooms/:id/reset', (req, res) => {
   const room = getRoomOr404(req.params.id);
@@ -233,7 +231,7 @@ function seedDemoRoom() {
   const room = new Room({
     name: 'Demo: Cars in city centres',
     topic: TOPIC_SUGGESTIONS[0],
-    settings: { maxTurns: 12 },
+    settings: { maxTurns: 40 },
   });
   for (const preset of PERSONA_PRESETS.slice(0, 4)) {
     room.addAgent({ ...preset, providerId: 'mock', model: 'mock-1' });

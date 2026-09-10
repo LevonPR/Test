@@ -210,20 +210,22 @@ export class Room extends EventEmitter {
     this._emitUpdate();
   }
 
-  async step() {
+  /**
+   * Runs exactly one turn. Validation errors are thrown synchronously so HTTP
+   * handlers can report them; the returned promise resolves when the turn ends.
+   */
+  step() {
     if (this.agents.length === 0) throw httpError(400, 'Add at least one agent first');
-    if (this.status === 'running' || this._stepping) return;
+    if (this.status === 'running' || this._stepping) throw httpError(409, 'An agent is already speaking');
     if (!this._canContinue()) throw httpError(400, 'Turn limit reached — raise "max turns" or reset the room');
     this._stepping = true;
     this.status = 'running';
     this._emitUpdate();
-    try {
-      await this._takeTurn();
-    } finally {
+    return this._takeTurn().finally(() => {
       this._stepping = false;
       if (this.status === 'running') this.status = this._canContinue() ? 'paused' : 'finished';
       this._emitUpdate();
-    }
+    });
   }
 
   reset() {
