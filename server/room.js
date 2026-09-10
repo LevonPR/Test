@@ -375,6 +375,7 @@ export class Room extends EventEmitter {
       this.turnsTaken += 1;
       const idx = this.agents.findIndex((a) => a.id === agent.id);
       this.turnIndex = idx === -1 ? this.turnIndex + 1 : idx + 1;
+      this._emitUpdate();
     }
 
     if (failed) {

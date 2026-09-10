@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Chat Room</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💬</text></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div id="app" class="app">
+    <!-- ───────────── Rooms sidebar ───────────── -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <span class="brand-mark">💬</span>
+        <div>
+          <div class="brand-name">AI Chat Room</div>
+          <div class="brand-sub" id="conn-status">connecting…</div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" id="btn-new-room">+ New room</button>
+      <nav class="room-list" id="room-list"></nav>
+      <div class="sidebar-foot">
+        <div class="providers-line" id="providers-line"></div>
+      </div>
+    </aside>
+
+    <!-- ───────────── Main chat ───────────── -->
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn only-mobile" id="btn-toggle-sidebar" title="Rooms">☰</button>
+        <div class="topbar-title">
+          <div class="room-name-row">
+            <h1 id="room-name" class="room-name">No room selected</h1>
+            <span class="status-badge" id="status-badge" data-status="idle">idle</span>
+            <span class="turns" id="turns"></span>
+          </div>
+          <div class="room-topic" id="room-topic"></div>
+        </div>
+        <div class="topbar-actions" id="room-controls">
+          <button class="btn btn-primary" id="btn-start" title="Let the agents talk">▶ Start</button>
+          <button class="btn" id="btn-pause" title="Pause after the current message" hidden>⏸ Pause</button>
+          <button class="btn" id="btn-step" title="One agent speaks once">Step</button>
+          <button class="btn" id="btn-reset" title="Clear the transcript">Reset</button>
+          <div class="menu">
+            <button class="btn" id="btn-more" title="More">⋯</button>
+            <div class="menu-items" id="more-menu" hidden>
+              <button data-action="settings">Room settings</button>
+              <button data-action="export-md">Export as Markdown</button>
+              <button data-action="export-json">Export as JSON</button>
+              <hr />
+              <button data-action="delete" class="danger">Delete room</button>
+            </div>
+          </div>
+        </div>
+        <button class="icon-btn only-mobile" id="btn-toggle-agents" title="Agents">👥</button>
+      </header>
+
+      <section class="messages" id="messages">
+        <div class="empty" id="empty-state">
+          <div class="empty-emoji">🗣️</div>
+          <h2>Nothing said yet</h2>
+          <p>Press <strong>Start</strong> and the agents will begin discussing the topic, or say something below to kick things off. Use <code>@Name</code> to address a specific agent.</p>
+        </div>
+      </section>
+
+      <form class="composer" id="composer">
+        <textarea id="composer-input" rows="1" placeholder="Say something to the room… (@Name to address an agent, Enter to send)"></textarea>
+        <button type="submit" class="btn btn-primary" id="btn-send">Send</button>
+      </form>
+    </main>
+
+    <!-- ───────────── Agents panel ───────────── -->
+    <aside class="agents-panel" id="agents-panel">
+      <div class="panel-head">
+        <h2>Participants</h2>
+        <span class="count" id="agent-count">0</span>
+      </div>
+      <div class="agent-list" id="agent-list"></div>
+
+      <form class="agent-form" id="agent-form">
+        <div class="panel-head">
+          <h3 id="agent-form-title">Add an agent</h3>
+          <button type="button" class="link" id="btn-cancel-edit" hidden>cancel</button>
+        </div>
+        <div class="preset-chips" id="preset-chips"></div>
+        <div class="row">
+          <input type="text" id="agent-emoji" placeholder="🤖" maxlength="4" class="emoji-input" title="Avatar emoji" />
+          <input type="text" id="agent-name" placeholder="Name" required maxlength="40" />
+        </div>
+        <textarea id="agent-persona" rows="4" placeholder="Persona / system prompt. Who is this agent? How do they talk? What do they care about?"></textarea>
+        <div class="row">
+          <select id="agent-provider" title="Provider"></select>
+          <input type="text" id="agent-model" list="model-list" placeholder="model" title="Model" />
+          <datalist id="model-list"></datalist>
+        </div>
+        <div class="provider-hint" id="provider-hint"></div>
+        <button type="submit" class="btn btn-primary btn-block" id="btn-save-agent">Add agent</button>
+      </form>
+    </aside>
+  </div>
+
+  <!-- ───────────── New room dialog ───────────── -->
+  <dialog id="dlg-new-room" class="dialog">
+    <form method="dialog" id="new-room-form">
+      <h2>New room</h2>
+      <label>Name<input type="text" id="nr-name" placeholder="e.g. Friday debate club" maxlength="60" /></label>
+      <label>Topic<textarea id="nr-topic" rows="2" placeholder="What should they talk about?"></textarea></label>
+      <div class="topic-chips" id="topic-chips"></div>
+      <label>Start with these agents
+        <div class="preset-checks" id="nr-presets"></div>
+      </label>
+      <label>Provider for those agents<select id="nr-provider"></select></label>
+      <div class="dialog-actions">
+        <button type="button" class="btn" data-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Create room</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ───────────── Settings dialog ───────────── -->
+  <dialog id="dlg-settings" class="dialog">
+    <form method="dialog" id="settings-form">
+      <h2>Room settings</h2>
+      <label>Room name<input type="text" id="st-name" maxlength="60" /></label>
+      <label>Topic<textarea id="st-topic" rows="2"></textarea></label>
+      <div class="grid2">
+        <label>Turn order
+          <select id="st-mode">
+            <option value="mention">Round-robin, @mentions jump the queue</option>
+            <option value="round-robin">Strict round-robin</option>
+            <option value="random">Random</option>
+          </select>
+        </label>
+        <label>Max turns (0 = unlimited)<input type="number" id="st-maxTurns" min="0" step="1" /></label>
+        <label>Pause between turns (ms)<input type="number" id="st-turnDelayMs" min="0" step="100" /></label>
+        <label>Max tokens per reply<input type="number" id="st-maxTokens" min="16" max="4096" step="1" /></label>
+        <label>Temperature<input type="number" id="st-temperature" min="0" max="2" step="0.1" /></label>
+        <label>Context window (messages)<input type="number" id="st-historyLimit" min="2" max="500" step="1" /></label>
+        <label>Your display name<input type="text" id="st-humanName" maxlength="40" /></label>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn" data-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toasts" id="toasts"></div>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

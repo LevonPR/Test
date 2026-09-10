@@ -25,6 +25,12 @@ const MIDDLES = [
   'the strongest version of the opposing view on {topic} deserves a real answer.',
   'I would separate the empirical question about {topic} from the normative one.',
   'the history of {topic} suggests we are overconfident here.',
+  'the people most affected are exactly the ones we have not heard from yet.',
+  'I keep coming back to incentives: who gains, who pays, and who decides?',
+  'we are treating a spectrum as a switch. Most good answers here are "it depends, and here is on what".',
+  'there is a version of this that works in a small town and fails in a metropolis, and vice versa.',
+  'my worry is less about whether it is right and more about whether it is reversible if we are wrong.',
+  'the honest answer is that the evidence is thinner than either side admits.',
 ];
 
 const REACTIONS = [
@@ -78,7 +84,11 @@ function pick(arr, seed) {
 }
 
 function snippet(text, maxWords = 7) {
-  const clean = text.replace(/\s+/g, ' ').replace(/^\[[^\]]+\]:\s*/, '').trim();
+  let clean = text.replace(/\s+/g, ' ').replace(/^\[[^\]]+\]:\s*/, '').trim();
+  // Skip short throat-clearing openers ("Hmm.", "Two things.") so we quote the substance.
+  const sentences = clean.split(/(?<=[.!?:])\s+/);
+  while (sentences.length > 1 && sentences[0].length < 30) sentences.shift();
+  clean = sentences.join(' ');
   const words = clean.split(' ');
   const cut = words.slice(0, maxWords).join(' ');
   return words.length > maxWords ? `${cut}…` : cut;
