@@ -9,7 +9,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -56,11 +58,11 @@ public class MainActivity extends Activity {
 
         configureWebView();
 
-        if (savedInstanceState != null) {
+        if (getServerUrl() == null) {
+            promptForServer(true);
+        } else if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState);
             addressText.setText(displayUrl(getServerUrl()));
-        } else if (getServerUrl() == null) {
-            promptForServer(true);
         } else {
             loadServer();
         }
@@ -111,11 +113,35 @@ public class MainActivity extends Activity {
                     showError(getString(R.string.error_unreachable, getServerUrl(), error.getDescription()));
                 }
             }
+
+            @Override
+            public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                // Without this the whole app is killed when Chromium's renderer dies
+                // (low memory, or a renderer bug). Swap in a fresh WebView instead.
+                if (view == webView) {
+                    replaceWebView();
+                    showError(getString(R.string.error_renderer_gone, getServerUrl()));
+                }
+                return true;
+            }
         });
 
         // Transcript exports (Content-Disposition: attachment) are handed to the system browser.
         webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) ->
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))));
+    }
+
+    private void replaceWebView() {
+        ViewGroup parent = (ViewGroup) webView.getParent();
+        int index = parent.indexOfChild(webView);
+        ViewGroup.LayoutParams lp = webView.getLayoutParams();
+        parent.removeView(webView);
+        webView.destroy();
+
+        webView = new WebView(this);
+        webView.setId(R.id.webview);
+        parent.addView(webView, index, lp);
+        configureWebView();
     }
 
     private String getServerUrl() {
