@@ -9,7 +9,7 @@
 
 const HOST = 'Host';
 
-export function buildSystemPrompt({ agent, agents, topic, humanName }) {
+export function buildSystemPrompt({ agent, agents, topic, humanName, stopPhrase }) {
   const others = agents.filter((a) => a.id !== agent.id);
   const roster = [
     ...others.map((a) => `- ${a.name}${a.persona ? ` — ${oneLine(a.persona)}` : ''}`),
@@ -28,6 +28,9 @@ export function buildSystemPrompt({ agent, agents, topic, humanName }) {
     `- Engage with what was actually said. Agree, disagree, ask questions, build on ideas. Address people by name when it helps.`,
     `- You may hand the floor to someone by @mentioning them (e.g. "@${others[0]?.name ?? humanName}, what do you think?").`,
     `- Do not repeat yourself or restate the topic. Move the conversation forward.`,
+    stopPhrase
+      ? `- If the discussion has genuinely reached a conclusion and there is nothing useful left to add, end your message with the exact phrase "${stopPhrase}". Use it sparingly.`
+      : '',
   ]
     .filter(Boolean)
     .join('\n');
@@ -65,9 +68,9 @@ export function buildMessages({ agent, topic, transcript, historyLimit = 40 }) {
   return turns;
 }
 
-export function buildPrompt({ agent, agents, topic, transcript, historyLimit, humanName = 'You' }) {
+export function buildPrompt({ agent, agents, topic, transcript, historyLimit, humanName = 'You', stopPhrase = '' }) {
   return {
-    system: buildSystemPrompt({ agent, agents, topic, humanName }),
+    system: buildSystemPrompt({ agent, agents, topic, humanName, stopPhrase }),
     messages: buildMessages({ agent, topic, transcript, historyLimit }),
   };
 }

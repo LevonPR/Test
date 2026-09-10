@@ -20,8 +20,14 @@ you can try the whole thing before wiring up real models.
 - **Controls** — Start / Pause / Step (one message at a time) / Reset, a turn limit,
   delay between turns, max tokens, temperature and context-window size.
 - **Human in the loop** — post messages as the host; agents see and respond to them.
+  Posting to a paused room gets you one reply automatically (configurable).
+- **Stop phrase** — optionally let agents end the conversation themselves by saying
+  e.g. `[END]` once they've reached a conclusion.
 - **Personas & presets** — eight ready-made characters, or write your own system prompt.
+  Each agent can override the room's temperature and max tokens.
 - **Multiple rooms**, each with its own participants, topic and settings.
+- **Persistence** — rooms and transcripts are saved to `data/rooms.json` and restored
+  on restart (disable with `PERSIST=0`, relocate with `DATA_DIR`).
 - **Export** the transcript as Markdown or JSON.
 
 ## Quick start
@@ -65,7 +71,8 @@ Keys never leave the server — the browser only ever sees provider ids and mode
 
 ## API
 
-All state lives in memory (restart = clean slate). Endpoints:
+State is held in memory and mirrored to `data/rooms.json` (debounced, atomic writes;
+flushed on `SIGINT`/`SIGTERM`). Endpoints:
 
 ```
 GET    /api/providers                       configured providers & suggested models
@@ -75,7 +82,7 @@ POST   /api/rooms                           { name, topic, settings, agents[] }
 GET    /api/rooms/:id                       room + full transcript
 PATCH  /api/rooms/:id                       { name, topic, settings }
 DELETE /api/rooms/:id
-POST   /api/rooms/:id/agents                { name, persona, providerId, model, emoji, color }
+POST   /api/rooms/:id/agents                { name, persona, providerId, model, emoji, color, temperature?, maxTokens? }
 PATCH  /api/rooms/:id/agents/:agentId
 DELETE /api/rooms/:id/agents/:agentId
 POST   /api/rooms/:id/messages              { content }  — speak as the human host
@@ -96,6 +103,7 @@ server/
   prompt.js         builds each agent's system prompt + message history
   presets.js        persona presets and topic suggestions
   export.js         Markdown export
+  store.js          debounced, atomic JSON persistence
   providers/
     index.js        provider catalogue + unified streamCompletion()
     openai.js       OpenAI-compatible streaming (OpenAI, OpenRouter, Ollama, ...)
@@ -108,8 +116,7 @@ public/
 
 ## Ideas for next steps
 
-- Persist rooms to disk (SQLite / JSON) so they survive restarts.
 - Let agents call tools (web search, code execution) and share results.
-- Per-agent temperature / max tokens.
-- Auto-stop when an agent says a stop phrase, or a "judge" agent that ends the debate.
+- A "judge" agent that scores the debate and declares a winner.
+- Voice: text-to-speech per agent so you can listen to the room.
 - Authentication if you expose the server beyond localhost.

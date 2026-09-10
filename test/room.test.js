@@ -1,11 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { Room } from '../server/room.js';
-import { buildMessages, stripSelfPrefix } from '../server/prompt.js';
+import { buildMessages, buildSystemPrompt, stripSelfPrefix } from '../server/prompt.js';
 import { composeMockReply } from '../server/providers/mock.js';
+import { createStore } from '../server/store.js';
 
 function roomWith(names, settings = {}) {
-  const room = new Room({ name: 't', topic: 'Testing', settings: { turnDelayMs: 0, ...settings } });
+  const room = new Room({ name: 't', topic: 'Testing', settings: { turnDelayMs: 0, autoReply: false, ...settings } });
   for (const name of names) room.addAgent({ name, providerId: 'mock' });
   return room;
 }
@@ -81,6 +85,81 @@ test('reset mid-turn drops the orphaned message', async () => {
   await p;
   assert.equal(room.messages.length, 0);
   assert.equal(removed.length, 1);
+});
+
+test('auto-reply: a human message in a paused room triggers exactly one turn', async () => {
+  const room = roomWith(['Ada', 'Bob'], { autoReply: true });
+  const ended = [];
+  room.on('message:end', (m) => ended.push(m.authorName));
+  room.addHumanMessage('@Bob, hello?');
+  await new Promise((resolve) => room.on('update', (s) => s.status === 'paused' && resolve()));
+  await new Promise((r) => setTimeout(r, 100));
+  assert.deepEqual(ended, ['Bob']);
+  assert.equal(room.status, 'paused');
+});
+
+test('auto-reply is skipped while running and when disabled', async () => {
+  const off = roomWith(['Ada'], { autoReply: false });
+  off.addHumanMessage('hi');
+  await new Promise((r) => setTimeout(r, 50));
+  assert.equal(off.messages.length, 1);
+  assert.equal(off.status, 'idle');
+});
+
+test('stop phrase finishes the conversation and is mentioned in the system prompt', async () => {
+  const room = roomWith(['Ada', 'Bob'], { maxTurns: 0, stopPhrase: 'THE' });
+  const system = buildSystemPrompt({ agent: room.agents[0], agents: room.agents, topic: 'x', humanName: 'You', stopPhrase: 'THE' });
+  assert.match(system, /"THE"/);
+
+  // Run until the mock says the (case-insensitive) phrase, which it does in most replies.
+  room.start();
+  await new Promise((resolve) => room.on('update', (s) => s.status === 'finished' && resolve()));
+  const agentMsgs = room.messages.filter((m) => m.authorType === 'agent');
+  assert.match(agentMsgs.at(-1).content, /the/i);
+  assert.match(room.messages.at(-1).content, /ended the conversation/);
+  // Start still works afterwards: the stop is soft.
+  assert.doesNotThrow(() => room.start());
+  room.pause();
+});
+
+test('per-agent overrides are validated and optional', () => {
+  const room = roomWith([]);
+  const a = room.addAgent({ name: 'Hot', providerId: 'mock', temperature: 5, maxTokens: '64' });
+  assert.equal(a.temperature, 2);
+  assert.equal(a.maxTokens, 64);
+  const b = room.addAgent({ name: 'Plain', providerId: 'mock', temperature: '', maxTokens: null });
+  assert.equal(b.temperature, null);
+  assert.equal(b.maxTokens, null);
+});
+
+test('rooms round-trip through toPersisted/fromPersisted', async () => {
+  const room = roomWith(['Ada', 'Bob'], { maxTurns: 5, stopPhrase: 'fin' });
+  room.addHumanMessage('hello');
+  await room.step();
+  const restored = Room.fromPersisted(JSON.parse(JSON.stringify(room.toPersisted())));
+  assert.equal(restored.id, room.id);
+  assert.equal(restored.status, 'paused');
+  assert.equal(restored.turnsTaken, 1);
+  assert.equal(restored.lastSpeakerId, room.lastSpeakerId);
+  assert.deepEqual(restored.agents, room.agents);
+  assert.deepEqual(restored.messages, room.messages);
+  assert.equal(restored.settings.stopPhrase, 'fin');
+  // Continues the round-robin where it left off.
+  await restored.step();
+  assert.equal(restored.messages.at(-1).authorName, 'Bob');
+});
+
+test('store writes atomically on flush and loads what it wrote', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'chatroom-'));
+  const file = path.join(dir, 'nested', 'rooms.json');
+  const store = createStore(file, { debounceMs: 10_000 });
+  assert.equal(store.load(), null);
+  store.schedule(() => ({ version: 1, rooms: [{ id: 'a' }] }));
+  assert.equal(existsSync(file), false, 'debounced write should not have happened yet');
+  store.flush();
+  assert.deepEqual(JSON.parse(readFileSync(file, 'utf8')), { version: 1, rooms: [{ id: 'a' }] });
+  assert.equal(existsSync(`${file}.tmp`), false);
+  assert.deepEqual(store.load(), { version: 1, rooms: [{ id: 'a' }] });
 });
 
 test('mock reply reacts to the previous speaker and topic', () => {

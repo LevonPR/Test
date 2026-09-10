@@ -8,10 +8,13 @@ import { Room, httpError } from './room.js';
 import { listProviders } from './providers/index.js';
 import { PERSONA_PRESETS, TOPIC_SUGGESTIONS } from './presets.js';
 import { toMarkdown } from './export.js';
+import { createStore } from './store.js';
 
 const PORT = Number(process.env.PORT) || 3000;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
+const PERSIST = process.env.PERSIST !== '0';
 
 // ---------------------------------------------------------------------------
 // State
@@ -22,6 +25,9 @@ const rooms = new Map();
 
 /** roomId -> Set<WebSocket> */
 const subscribers = new Map();
+
+const store = PERSIST ? createStore(path.join(DATA_DIR, 'rooms.json')) : null;
+const persist = () => store?.schedule(() => ({ version: 1, rooms: [...rooms.values()].map((r) => r.toPersisted()) }));
 
 function broadcastRoom(roomId, payload) {
   const subs = subscribers.get(roomId);
@@ -44,14 +50,25 @@ function registerRoom(room) {
   room.on('update', (state) => {
     broadcastRoom(room.id, { type: 'room', room: state });
     broadcastAll({ type: 'rooms', rooms: roomList() });
+    persist();
   });
-  room.on('message', (message) => broadcastRoom(room.id, { type: 'message', message }));
+  room.on('message', (message) => {
+    broadcastRoom(room.id, { type: 'message', message });
+    persist();
+  });
   room.on('message:start', (message) => broadcastRoom(room.id, { type: 'message:start', message }));
   room.on('message:delta', (d) => broadcastRoom(room.id, { type: 'message:delta', ...d }));
-  room.on('message:end', (message) => broadcastRoom(room.id, { type: 'message:end', message }));
+  room.on('message:end', (message) => {
+    broadcastRoom(room.id, { type: 'message:end', message });
+    persist();
+  });
   room.on('message:remove', (d) => broadcastRoom(room.id, { type: 'message:remove', ...d }));
-  room.on('reset', () => broadcastRoom(room.id, { type: 'reset' }));
+  room.on('reset', () => {
+    broadcastRoom(room.id, { type: 'reset' });
+    persist();
+  });
   broadcastAll({ type: 'rooms', rooms: roomList() });
+  persist();
   return room;
 }
 
@@ -100,6 +117,7 @@ app.delete('/api/rooms/:id', (req, res) => {
   broadcastRoom(room.id, { type: 'room:deleted' });
   subscribers.delete(room.id);
   broadcastAll({ type: 'rooms', rooms: roomList() });
+  persist();
   res.status(204).end();
 });
 
@@ -224,7 +242,7 @@ const heartbeat = setInterval(() => {
 wss.on('close', () => clearInterval(heartbeat));
 
 // ---------------------------------------------------------------------------
-// Demo room so the app is not empty on first launch
+// Boot: restore saved rooms, or seed a demo room so the app is not empty
 // ---------------------------------------------------------------------------
 
 function seedDemoRoom() {
@@ -239,10 +257,37 @@ function seedDemoRoom() {
   registerRoom(room);
 }
 
-seedDemoRoom();
+function restoreRooms() {
+  const saved = store?.load();
+  if (!saved?.rooms?.length) return 0;
+  for (const data of saved.rooms) {
+    try {
+      registerRoom(Room.fromPersisted(data));
+    } catch (err) {
+      console.error(`[store] skipping corrupt room ${data?.id}: ${err.message}`);
+    }
+  }
+  return rooms.size;
+}
+
+const restored = restoreRooms();
+if (restored === 0) seedDemoRoom();
+
+function shutdown(signal) {
+  console.log(`\n${signal} received, saving…`);
+  for (const room of rooms.values()) room.pause();
+  store?.flush();
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(0), 1000).unref();
+}
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 server.listen(PORT, () => {
   const configured = listProviders().filter((p) => p.configured).map((p) => p.id);
   console.log(`AI Chat Room listening on http://localhost:${PORT}`);
   console.log(`Providers ready: ${configured.join(', ')}`);
+  console.log(
+    store ? `Persistence: ${restored ? `restored ${restored} room(s) from` : 'saving to'} ${store.file}` : 'Persistence: disabled (PERSIST=0)',
+  );
 });

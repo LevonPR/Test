@@ -46,6 +46,8 @@ const els = {
   agentPersona: $('#agent-persona'),
   agentProvider: $('#agent-provider'),
   agentModel: $('#agent-model'),
+  agentTemperature: $('#agent-temperature'),
+  agentMaxTokens: $('#agent-maxTokens'),
   modelList: $('#model-list'),
   providerHint: $('#provider-hint'),
   btnSaveAgent: $('#btn-save-agent'),
@@ -384,11 +386,12 @@ function renderAgents() {
     card.className = `agent-card${a.id === state.speakingAgentId ? ' speaking' : ''}`;
     card.style.setProperty('--c', a.color);
     const warn = provider(a.providerId) && !provider(a.providerId).configured ? ' ⚠️' : '';
+    const overrides = [a.temperature != null && `t=${a.temperature}`, a.maxTokens != null && `${a.maxTokens} tok`].filter(Boolean);
     card.innerHTML = `
       <div class="avatar ${a.emoji.length > 2 ? 'text' : ''}">${esc(a.emoji)}</div>
       <div>
         <div class="ac-name">${esc(a.name)}</div>
-        <div class="ac-model" title="${esc(a.persona)}">${esc(a.providerId)}/${esc(a.model)}${warn}</div>
+        <div class="ac-model" title="${esc(a.persona)}">${esc(a.providerId)}/${esc(a.model)}${warn}${overrides.length ? ` · ${overrides.join(' · ')}` : ''}</div>
       </div>
       <div class="ac-actions">
         <button title="Edit" data-act="edit">✎</button>
@@ -413,6 +416,8 @@ function startEditAgent(a) {
   els.agentProvider.value = a.providerId;
   onProviderChange();
   els.agentModel.value = a.model;
+  els.agentTemperature.value = a.temperature ?? '';
+  els.agentMaxTokens.value = a.maxTokens ?? '';
   els.agentsPanel.classList.add('open');
   els.agentName.focus();
 }
@@ -425,6 +430,8 @@ function resetAgentForm() {
   els.agentEmoji.value = '';
   els.agentName.value = '';
   els.agentPersona.value = '';
+  els.agentTemperature.value = '';
+  els.agentMaxTokens.value = '';
   const preferred = state.providers.find((p) => p.configured && p.id !== 'mock' && p.id !== 'ollama') || state.providers[0];
   if (preferred) els.agentProvider.value = preferred.id;
   onProviderChange();
@@ -456,6 +463,8 @@ els.agentForm.addEventListener('submit', (e) => {
     persona: els.agentPersona.value.trim(),
     providerId: els.agentProvider.value,
     model: els.agentModel.value.trim(),
+    temperature: els.agentTemperature.value === '' ? null : +els.agentTemperature.value,
+    maxTokens: els.agentMaxTokens.value === '' ? null : +els.agentMaxTokens.value,
   };
   guarded(async () => {
     if (state.editingAgentId) await api('PATCH', roomPath(`/agents/${state.editingAgentId}`), spec);
@@ -594,23 +603,22 @@ els.newRoomForm.addEventListener('submit', (e) => {
 // Settings dialog
 // ---------------------------------------------------------------------------
 
+const SETTING_KEYS = ['mode', 'maxTurns', 'turnDelayMs', 'maxTokens', 'temperature', 'historyLimit', 'humanName', 'stopPhrase'];
+
 function openSettings() {
   const r = state.room;
   if (!r) return;
   $('#st-name').value = r.name;
   $('#st-topic').value = r.topic;
-  for (const key of ['mode', 'maxTurns', 'turnDelayMs', 'maxTokens', 'temperature', 'historyLimit', 'humanName']) {
-    $(`#st-${key}`).value = r.settings[key];
-  }
+  for (const key of SETTING_KEYS) $(`#st-${key}`).value = r.settings[key] ?? '';
+  $('#st-autoReply').checked = r.settings.autoReply !== false;
   els.dlgSettings.showModal();
 }
 
 els.settingsForm.addEventListener('submit', (e) => {
   e.preventDefault();
-  const settings = {};
-  for (const key of ['mode', 'maxTurns', 'turnDelayMs', 'maxTokens', 'temperature', 'historyLimit', 'humanName']) {
-    settings[key] = $(`#st-${key}`).value;
-  }
+  const settings = { autoReply: $('#st-autoReply').checked };
+  for (const key of SETTING_KEYS) settings[key] = $(`#st-${key}`).value;
   guarded(async () => {
     await api('PATCH', roomPath(), { name: $('#st-name').value, topic: $('#st-topic').value, settings });
     els.dlgSettings.close();

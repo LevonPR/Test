@@ -16,6 +16,8 @@ export const DEFAULT_SETTINGS = {
   temperature: 0.9,
   historyLimit: 40,
   humanName: 'You',
+  autoReply: true, // a human message in an idle/paused room triggers one agent turn
+  stopPhrase: '', // if an agent's reply contains this, the conversation finishes
 };
 
 const sleep = (ms, signal) =>
@@ -60,6 +62,35 @@ export class Room extends EventEmitter {
 
   // ---------- serialization ----------
 
+  /** Everything needed to rebuild the room after a restart. */
+  toPersisted() {
+    return {
+      id: this.id,
+      name: this.name,
+      topic: this.topic,
+      settings: this.settings,
+      agents: this.agents,
+      messages: this.messages.filter((m) => !m.streaming),
+      turnsTaken: this.turnsTaken,
+      turnIndex: this.turnIndex,
+      lastSpeakerId: this.lastSpeakerId,
+      createdAt: this.createdAt,
+    };
+  }
+
+  static fromPersisted(data) {
+    const room = new Room({ id: data.id, name: data.name, topic: data.topic, settings: data.settings });
+    room.agents = Array.isArray(data.agents) ? data.agents : [];
+    room.messages = Array.isArray(data.messages) ? data.messages : [];
+    room.turnsTaken = data.turnsTaken ?? 0;
+    room.turnIndex = data.turnIndex ?? 0;
+    room.lastSpeakerId = data.lastSpeakerId ?? null;
+    room.createdAt = data.createdAt ?? Date.now();
+    // Never resume running on boot: a restart is a natural pause point.
+    room.status = !room._canContinue() ? 'finished' : room.messages.length ? 'paused' : 'idle';
+    return room;
+  }
+
   toJSON() {
     return {
       id: this.id,
@@ -93,6 +124,8 @@ export class Room extends EventEmitter {
       if (Number.isFinite(+settings.temperature)) s.temperature = clamp(+settings.temperature, 0, 2);
       if (Number.isFinite(+settings.historyLimit)) s.historyLimit = clamp(Math.floor(+settings.historyLimit), 2, 500);
       if (typeof settings.humanName === 'string' && settings.humanName.trim()) s.humanName = settings.humanName.trim().slice(0, 40);
+      if (settings.autoReply !== undefined) s.autoReply = settings.autoReply === true || settings.autoReply === 'true';
+      if (typeof settings.stopPhrase === 'string') s.stopPhrase = settings.stopPhrase.trim().slice(0, 60);
       this.settings = s;
     }
     if (this.status === 'finished' && this._canContinue()) this.status = 'paused';
@@ -142,6 +175,12 @@ export class Room extends EventEmitter {
     const model = String(spec.model || provider.models[0] || '').trim();
     const usedColors = new Set(this.agents.filter((a) => a.id !== spec.id).map((a) => a.color));
     const color = spec.color || PALETTE.find((c) => !usedColors.has(c)) || PALETTE[this.agents.length % PALETTE.length];
+    const optionalNumber = (v, lo, hi, integer = false) => {
+      if (v === undefined || v === null || v === '') return null;
+      const n = +v;
+      if (!Number.isFinite(n)) return null;
+      return clamp(integer ? Math.floor(n) : n, lo, hi);
+    };
     return {
       id: spec.id || randomUUID(),
       name,
@@ -150,6 +189,9 @@ export class Room extends EventEmitter {
       model,
       color,
       emoji: String(spec.emoji || '').trim().slice(0, 4) || name[0].toUpperCase(),
+      // Optional per-agent overrides; null falls back to the room settings.
+      temperature: optionalNumber(spec.temperature, 0, 2),
+      maxTokens: optionalNumber(spec.maxTokens, 16, 4096, true),
     };
   }
 
@@ -173,6 +215,15 @@ export class Room extends EventEmitter {
     if (this.status === 'finished' && this._canContinue()) {
       this.status = 'paused';
       this._emitUpdate();
+    }
+    if (
+      this.settings.autoReply &&
+      (this.status === 'idle' || this.status === 'paused') &&
+      !this._stepping &&
+      this.agents.length > 0 &&
+      this._canContinue()
+    ) {
+      this.step().catch((err) => console.error(`[room ${this.id}] auto-reply failed:`, err.message));
     }
     return message;
   }
@@ -329,6 +380,7 @@ export class Room extends EventEmitter {
       transcript: this.messages,
       historyLimit: this.settings.historyLimit,
       humanName: this.settings.humanName,
+      stopPhrase: this.settings.stopPhrase,
     });
 
     this.messages.push(message);
@@ -341,8 +393,8 @@ export class Room extends EventEmitter {
         model: agent.model,
         system,
         messages,
-        temperature: this.settings.temperature,
-        maxTokens: this.settings.maxTokens,
+        temperature: agent.temperature ?? this.settings.temperature,
+        maxTokens: agent.maxTokens ?? this.settings.maxTokens,
         signal: ac.signal,
         meta: { agentName: agent.name, topic: this.topic, humanName: this.settings.humanName },
       });
@@ -378,6 +430,12 @@ export class Room extends EventEmitter {
       const idx = this.agents.findIndex((a) => a.id === agent.id);
       this.turnIndex = idx === -1 ? this.turnIndex + 1 : idx + 1;
       this._emitUpdate();
+
+      const stop = this.settings.stopPhrase;
+      if (stop && message.content.toLowerCase().includes(stop.toLowerCase())) {
+        this.status = 'finished';
+        this._addSystemMessage(`${agent.name} ended the conversation ("${stop}"). Press Start to resume anyway.`);
+      }
     }
 
     if (failed) {
