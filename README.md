@@ -40,6 +40,15 @@ npm start
 
 A demo room with four mock agents is created on boot. Press **▶ Start**.
 
+## On your phone
+
+The UI is responsive, so the quickest test is to open the address the server prints
+(`On your phone (same Wi-Fi): http://192.168.x.x:3000`) in your phone's browser.
+
+There is also a native Android app in [`android/`](android/README.md): a `WebView`
+shell with a server-address setting. Download the APK from the **Android APK**
+workflow under the *Actions* tab, or build it with `cd android && ./gradlew assembleDebug`.
+
 ## Connecting real models
 
 Copy `.env.example` to `.env` (or export the variables) and restart the server:
@@ -112,6 +121,8 @@ server/
     sse.js          server-sent-events parser
 public/
   index.html, styles.css, app.js   the client (no build step)
+android/
+  Android WebView shell (Gradle project, builds an APK)
 ```
 
 ## Ideas for next steps

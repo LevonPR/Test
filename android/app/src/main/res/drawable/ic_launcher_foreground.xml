@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Two overlapping speech bubbles: agents talking to each other. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- back bubble -->
+    <path
+        android:fillColor="#4A36B3"
+        android:pathData="M30,30 h36 a10,10 0 0 1 10,10 v18 a10,10 0 0 1 -10,10 h-20 l-10,8 v-8 h-6 a10,10 0 0 1 -10,-10 v-18 a10,10 0 0 1 10,-10 z" />
+
+    <!-- front bubble -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,44 h34 a10,10 0 0 1 10,10 v16 a10,10 0 0 1 -10,10 h-6 v8 l-10,-8 h-18 a10,10 0 0 1 -10,-10 v-16 a10,10 0 0 1 10,-10 z" />
+
+    <!-- dots -->
+    <path
+        android:fillColor="#7C5CFF"
+        android:pathData="M52,62 m-3.5,0 a3.5,3.5 0 1 0 7,0 a3.5,3.5 0 1 0 -7,0 z M61,62 m-3.5,0 a3.5,3.5 0 1 0 7,0 a3.5,3.5 0 1 0 -7,0 z M70,62 m-3.5,0 a3.5,3.5 0 1 0 7,0 a3.5,3.5 0 1 0 -7,0 z" />
+</vector>
