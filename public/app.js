@@ -553,8 +553,21 @@ function autosize() {
 els.composerInput.addEventListener('input', autosize);
 
 // Mobile drawers
-$('#btn-toggle-sidebar').addEventListener('click', () => els.sidebar.classList.toggle('open'));
-$('#btn-toggle-agents').addEventListener('click', () => els.agentsPanel.classList.toggle('open'));
+$('#btn-toggle-sidebar').addEventListener('click', (e) => {
+  e.stopPropagation();
+  els.agentsPanel.classList.remove('open');
+  els.sidebar.classList.toggle('open');
+});
+$('#btn-toggle-agents').addEventListener('click', (e) => {
+  e.stopPropagation();
+  els.sidebar.classList.remove('open');
+  els.agentsPanel.classList.toggle('open');
+});
+// Tapping the chat area closes whichever drawer is open.
+$('.main').addEventListener('click', () => {
+  els.sidebar.classList.remove('open');
+  els.agentsPanel.classList.remove('open');
+});
 
 // ---------------------------------------------------------------------------
 // New room dialog
