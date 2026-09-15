@@ -3,8 +3,10 @@
 Chris Hecker worked on Spore at Maxis for six years (creature animation, prototyping, AI) and
 later made SpyParty. The lectures below are the ones from
 [Category:Lectures](https://www.chrishecker.com/Category:Lectures) with direct bearing on how we
-design, prototype, tune and ship an evolution game. Full 27-lecture index with links:
-`lectures-index.md`.
+design, prototype, tune and ship Biomant Chimerolog. Full 27-lecture index with links and
+evidence classes (technical / methodology / opinion): `lectures.md`. Unless a paragraph says
+otherwise, statements here summarize Hecker's position (historical opinion or production
+practice), and "for our project" paragraphs are our proposed adaptation.
 
 ## 1. Advanced Prototyping (GDC 2006, with Chaim Gingold)
 
@@ -154,8 +156,8 @@ designs where extrinsic motivation works. If forced to ship rewards, **minimize 
 - Use **endogenous** rewards (inside the game's fiction/systems).
 - Make them informational, not controlling.
 
-For an evolution game: let new traits, morphologies and ecological niches be the reward; avoid
-badge-style meta-rewards for "evolving 10 times".
+For our project: let new grafts, abilities, clinic capabilities and folklore discoveries be
+the reward; avoid badge-style meta-rewards such as "perform 10 splices".
 
 ## 6. Metrics Fetishism
 
@@ -190,7 +192,7 @@ art."**
   2012 rant): developers, players and press share an **appetite for sameness**. Why care? "For
   the same reason people should care about biodiversity... a world with only weedy species...
   kudzu, rats, cockroaches, and us would be incredibly sad and boring." A ready-made thematic
-  hook for an evolution game about diversity.
+  hook for a game about chimeras and creature variety.
 - [5 Minutes Worth of Observations about AAA Indie Games](https://www.chrishecker.com/5_Minutes_Worth_of_Observations_about_AAA_Indie_Games)
   (IGS 2011): AAA indie = polished, full of love, **highly anticipated**; every one had "A
   Long-term Slow-burn Grass-roots Awareness-building Campaign"; talk about your game early and

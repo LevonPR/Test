@@ -1,82 +1,47 @@
 ---
 name: spore
-description: "Design and engineering knowledge distilled from Maxis' Spore for building an evolution game: the 13 public Spore prototypes and how Maxis prototyped, the SIGGRAPH 2008 procedural creature-animation system (semantic retargeting, variants, gait synthesis, Particle IK, Jiggles), and Chris Hecker's lectures on prototyping, structure-vs-style, IK/physics, and game design. Use when designing or implementing creature editors, procedural animation for user-made morphologies, evolution/ecosystem simulations, cellular-automata worlds, prototyping plans, or tuning pipelines for the evolution game."
+description: Apply Spore research to Biomant Chimerolog (The Grand Chimerolog / Imperium of Rus) and procedural creature game development. Use for chimera anatomy and editors, morphology-independent animation, semantic action targeting, inverse kinematics, gait synthesis, ecology prototypes, consequences of creature customization, and evidence-based Spore authenticity scoring.
 ---
 
-# Spore: Reference Skill for the Evolution Game
+# Spore
 
-This skill packages everything from the requested sources into a form you can act on while
-building our evolution game. Use it whenever a task touches creature creation, animating
-arbitrary player-made bodies, simulating life/ecosystems/galaxies, prototyping a mechanic,
-or deciding how to tune and iterate.
+Build original creature systems using the supplied Spore research. Preserve Biomant Chimerolog's biomancy, clinic management, folklore hunting, splicing, and row-based tactical combat. Treat this as a reusable engineering and design reference, not a replacement game specification.
 
-Sources (all content in `references/` is distilled from these):
+## Start with the relevant evidence
 
-| Source | What it covers | Reference file |
-| --- | --- | --- |
-| [spore.com/comm/prototypes](https://www.spore.com/comm/prototypes) | 13 playable Maxis prototypes that led to Spore | `references/prototypes.md` |
-| [Real-time Motion Retargeting... (page)](https://www.chrishecker.com/Real-time_Motion_Retargeting_to_Highly_Varied_User-Created_Morphologies) + [SIGGRAPH 2008 PDF](https://www.chrishecker.com/images/c/cb/Sporeanim-siggraph08.pdf) | The full Spore creature animation system | `references/procedural-animation.md`, `references/particle-ik-solver.md` |
-| [How To Animate a Character You've Never Seen Before](https://www.chrishecker.com/How_To_Animate_a_Character_You%27ve_Never_Seen_Before) | GDC 2007 lecture on the same system | `references/procedural-animation.md` |
-| [Category:Lectures](https://www.chrishecker.com/Category:Lectures) | All 27 Hecker lectures (prototyping, IK, physics, design, AI) | `references/lectures-index.md`, `references/design-philosophy.md`, `references/ik-and-physics.md` |
+- Read [sources and coverage](references/sources.md) for provenance, acquisition status, media links, and gaps. Do not claim every linked recording or prototype executable has been studied.
+- Read [paper engineering notes](references/paper-notes.md) for anatomy, contexts, coordinate frames, binding, gaits, IK, secondary motion, results, and limitations.
+- Use [the complete supplied paper](references/paper/Sporeanim-siggraph08.pdf) and [its page-indexed text](references/paper/full-text.md) when exact details matter. Search the text for `Movement Modes`, `Variant Product`, `Spine Splines`, `Preconditioning`, or `Limitations`; inspect PDF figures rather than inferring them from extraction.
+- Read [Chimerolog implementation](references/chimerolog-implementation.md) for project-specific proposals, contracts, acceptance scenarios, and the phased build sequence.
+- Read [prototype map](references/prototypes.md) for all 13 official prototype descriptions and independent experiments for our game.
+- Read [lecture guide](references/lectures.md) for all 27 category entries, game-design implications, and distinctions between historical opinion and technical evidence.
 
-Applied guidance for our project (derived from the above, not from the sources directly):
-`references/evolution-game-playbook.md`.
+## Working procedure
 
-## How to use this skill
+1. Inspect the current game, its instructions, engine, save schema, and implemented systems before changing code. The project mapping here is a proposal based on the user's concept, not evidence of current implementation. Respect newer decisions.
+2. State the concrete behavior to deliver: which creature forms, actions, world interactions, target platform, and fallback behavior are involved. Preserve the existing stack; use this research in a 2D or 3D implementation as appropriate.
+3. Separate the anatomy definition, generated phenotype, animation intent, physical pose, and game simulation. Let anatomy determine legal actions and visuals through one validated contract.
+4. Select body parts by capabilities and spatial relationships. Handle zero, one, and many results explicitly. Never make arbitrary chimeras depend on universal bone names such as `LeftHand` or on a humanoid-only imported rig.
+5. Author action timing and style in generalized coordinates; specialize to the current body's scale, rest pose, ground, or target. Keep the editor preview and runtime evaluator shared. Preserve rest poses when changing coordinate modes.
+6. Bind and cache anatomy-dependent selections and variants; invalidate on relevant anatomy/capability changes. Blend goals, add gait goals, solve spine then limbs where appropriate, and apply passive secondary motion only after authoritative goals.
+7. Make changes observable across several markedly different creatures, not merely a single attractive reference. Validate the relevant geometric, gameplay, interruption, persistence, and visual invariants from the implementation reference.
+8. Report what was implemented and measured, what is a simpler approximation, and the next unresolved research question. Avoid promises of arbitrary-morphology perfection or historical benchmark performance on current devices.
 
-1. Identify which subsystem the task is about and open the matching reference file below.
-   Do not try to hold the whole skill in context at once; the reference files are long.
-2. Prefer the source vocabulary (bodies, caps, contexts, movement modes, variants, leg groups,
-   Particle IK, Jiggles) in code and docs so the team shares one language with the literature.
-3. When proposing a new mechanic or system, first check `references/prototypes.md` for the
-   Maxis prototype that already explored it, and follow the prototyping rules in
-   `references/design-philosophy.md` (focused question, cheapest tuning tier, archive metric).
-4. Cite the source file/section in PR descriptions when a design decision comes from this skill.
+## Essential distinctions
 
-## Quick decision guide
+- Distinguish **source finding**, **our proposed adaptation**, and **unverified work** in design decisions. Use the 2008 paper over the earlier 2007 slides where the architecture differs: passive Jiggles follows IK; do not copy the older Wiggles ordering into the final architecture.
+- The paper supplies an animation architecture, not complete Spore source code, a full DNA-to-surface algorithm, an automatic skinning implementation, genetic simulation, or a ready game engine. Describe mesh/UV/skinning/genetics choices as our implementation choices.
+- Use a supported morphology envelope with graceful handling outside it. Restricted body plans can be a production milestone without removing the broader vision.
+- Keep visual generation asynchronous and optional to the simulation. A generated portrait or GLB is not automatically an animatable, semantically tagged, deformable chimera. Use anatomy as the authority and validate generated assets against it.
+- Study the official prototypes as design references. Their page's stated terms do not grant general commercial reuse of EA binaries/assets; do not vendor them into our game. Preserve the supplied paper as a research reference, separate from shipped game assets.
+- Skill use does not itself authorize paid generations, publication, messages, or changes outside the requested game work.
 
-| If the task is... | Read | Key takeaways |
-| --- | --- | --- |
-| Build/extend the creature editor data model | `procedural-animation.md` §1 | Character = DAG of 20-80 *bodies*; serial spine chain at the root; each body has transform, bounds, parent, and *capability* tags (grasper, mouth, foot, spine, root...). Rest pose is whatever the player built. |
-| Animate a creature that did not exist at author time | `procedural-animation.md` §2-3 | Author in a generalized, morphology-independent space via *semantic* selection (contexts) and *movement modes*; specialize at runtime; enumerate *variants*; branch only as a last resort. |
-| Make legs walk on any leg count/length | `procedural-animation.md` §3.4 | Cluster legs into groups of similar length, harmonize with small rational ratios, drive duty factor + step trigger per foot, authored gait styles for 1-6 feet, procedural for 7+, crawl/float heuristic for footless bodies. |
-| Pose a skeleton from goals every frame | `particle-ik-solver.md` | Two-phase (spine then limbs) particle-and-length-constraint solver; aim preconditioner; spine splines (quintic Hermite); anti-buckling; delegated goals; soft constraints. ~0.2 ms for 25 bodies in 2008. |
-| Add life to un-animated parts | `procedural-animation.md` §3.6 | *Jiggles*: passive, highly damped pseudo-physics on sub-trees with no IK; never feeds back into keyed bodies. |
-| Simulate ecosystems, spread of life, fire, disease, star formation | `prototypes.md` (BIOME, CellCulture, Gaslight, ParticleMan, TextureBox) | Stoichiometry-style CA rules; grid with per-cell life variables; SSPSF for galaxies; gravitational N-body for nebulae/orbits. |
-| Design the creature-stage economy (hunt, eat, rest, level) | `prototypes.md` (SPUG, GonzagoGL) | Tunable, self-limited sandbox for designers first; graphics later. |
-| Design tribe/city/space stages | `prototypes.md` (CityMaze, Crowd, Space) | Agent-based cities with mood/safety/rest loops; galaxy exploration with terraform/colonize/research economy. |
-| Decide whether to prototype, and how | `design-philosophy.md` §1 | One question per prototype; Tower of Tuning (stay as low as possible); measure by how often the prototype is referred back to. |
-| Choose how to expose tuning knobs | `design-philosophy.md` §1.2 | recompiling < interactive editor < data driving < hotloading < scripting language. Climb only when forced. |
-| Decide what is code vs. what is authored content | `design-philosophy.md` §2 | Structure vs. style decomposition: computer reasons about structure, artists own style. The Spore anim system and creature paint are explicit examples. |
-| Wire AI to animation | `design-philosophy.md` §3 | Game AI *is* game design; the Outro Problem and the AI-Anim Problem; avoid bubble-and-line middleware that just relocates the problem. |
-| Evaluate a paper/algorithm for adoption | `design-philosophy.md` §4 | Robustness > simplicity > performance. Source code is more rigorous than the paper. |
-| Add rewards/achievements/metrics | `design-philosophy.md` §5-6 | Tangible expected contingent rewards reduce intrinsic motivation; metrics are craft, intuition is art; avoid hill-climbing into a local maximum. |
-| Scope and depth of the game | `design-philosophy.md` §7 | Spore under-explored *editor consequence*; depth not time invested; you cannot overhype, only underdeliver. |
-| Physics for ragdolls, tails, ponytails, constraints | `ik-and-physics.md` | Survey of IK methods Hecker tried; four articulated-body simulators; Lagrange multipliers in 4 steps; MLCP as a universal hammer; annotated physics bibliography. |
+## Authenticity scoring
 
-## Non-negotiable lessons from the sources
+When asked to score authenticity or develop toward a Spore benchmark, use [the SAS 1.0 rubric](references/authenticity-score.md). Declare cell-stage versus whole-game scope, score implemented behavior with evidence ceilings, and preserve assessments with the game source. Treat 0–100 as a subjective comparison, not an official rating or a measure of skill knowledge. Do not raise a score for untested features or impose Spore stage progression on a different requested game.
 
-- Bring humans into the semantic loop. Spore's biggest win was having animators *tell* the
-  system what matters (which bodies, which frame of reference) rather than inferring it.
-  "Having a human simply tell the system what is important is immensely powerful, efficient,
-  and robust."
-- Design for graceful failure. Goals will be out of reach, in conflict, or implausible.
-  Every failure mode must still produce a natural-looking pose or behavior.
-- Prefer simple, tunable algorithms over mathematically fancy ones. The Particle IK solver
-  beat CCD, Jacobian, and constrained-dynamics solvers because it was *tunable*, not because
-  it was more correct.
-- Path independence matters. Redundant solvers that depend on the previous frame's solution
-  will eventually tie themselves in knots.
-- Passive secondary motion must never override authored motion (Wiggles -> Jiggles lesson).
-- Prototype to answer one question, at the lowest tuning tier that works, and archive it.
-- Test stochastically against real user content. Spore kept an "Animation Validation Grid"
-  of creatures x animations, targeting a ~90%+ pass rate and improving.
-- Explore the core mechanic to the depth it deserves. Wacky ideas are cheap; depth is rare.
+## Supplementary references
 
-## Legal note on the Maxis prototypes
-
-The prototypes on spore.com ship under EA's Tools & Materials EULA: personal, noncommercial
-use only; no redistribution, modification, reverse engineering, or commercial use. Treat them
-as design references to play and learn from. Do not vendor their binaries or assets into this
-repository and do not derive code from disassembly. Reimplement the *ideas* (which are
-described publicly on that page) in our own code.
+- [Particle IK solver](references/particle-ik-solver.md): implementation-level notes and pseudocode for the paper's two-phase solver.
+- [IK and physics background](references/ik-and-physics.md): Hecker's solver survey, articulated-body simulators, Lagrange multipliers, MLCP, physics bibliography.
+- [Design philosophy](references/design-philosophy.md): expanded notes on the prototyping, structure-vs-style, AI, rewards, metrics, and depth lectures.

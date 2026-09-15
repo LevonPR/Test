@@ -106,10 +106,10 @@ for rigid-body dynamics with milestones. Breadth-first ordering. Highlights:
 - Further sections: collision detection, articulated rigid bodies, constraints, generalized
   coordinates, contact, "It Doesn't Work" (debugging/stiffness), "What's Left?".
 
-## 7. What this means for the evolution game
+## 7. What this means for Biomant Chimerolog (proposed adaptation)
 
-- Creature posing: particle IK (Spore approach). Cheap, tunable, path independent.
-- Secondary motion (tails, antennae, tentacles, fronds): Jiggles-style damped pseudo-physics on
+- Chimera posing: particle IK (Spore approach). Cheap, tunable, path independent.
+- Secondary motion (tails, antennae, tentacles, manes): Jiggles-style damped pseudo-physics on
   non-IK sub-trees; if real dynamics are ever needed, Jakobsen projection first, Lagrange
   multipliers only for mechanisms needing exact hard joints.
 - Contact/joint limits at scale: consider an MLCP formulation to unify them under one solver.

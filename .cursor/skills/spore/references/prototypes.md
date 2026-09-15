@@ -1,175 +1,169 @@
-# The Spore Prototypes (Maxis, 2002-2008)
+# Prototype Map: the 13 Official Spore Prototypes and Our Experiments
 
 Source: [spore.com/comm/prototypes](https://www.spore.com/comm/prototypes) ("Play with our
-Prototypes"). Maxis describes how Spore was "a huge undertaking" during which they explored
-"countless design directions in gameplay, simulation and user interface", and that one of their
-main exploration tools was building "simple, playable prototypes that we can play around with
-to get a sense for a particular system." The public downloads are explicitly "not tested,
-supported or even easily explained."
+Prototypes"). Maxis describes Spore as "a huge undertaking" during which they explored
+"countless design directions in gameplay, simulation and user interface", using "simple,
+playable prototypes that we can play around with to get a sense for a particular system." The
+public downloads are "not tested, supported or even easily explained."
 
-License: EA Tools & Materials EULA. Personal, noncommercial use only; no modification,
-reverse engineering, redistribution or commercial use. Use these as references, not as code.
+Coverage: the page descriptions were read; **the executables were not downloaded or run**
+(see `sources.md`). Everything under "Official description" is paraphrased from the page.
+Everything under "Chimerolog experiment" is our proposal.
 
-Complementary source: Chris Hecker and Chaim Gingold's GDC 2006 lecture *Advanced Prototyping*
-(see `design-philosophy.md` §1), which is the methodology behind these prototypes.
+License: EA Tools & Materials EULA (text on the page). Personal, noncommercial use "in
+connection with EA's products"; no modification, reverse engineering, redistribution, or
+commercial use; EA may revoke at any time. These are design references. Do not vendor
+binaries or assets into Biomant Chimerolog and do not derive code from them.
 
-## 1. The prototype lineage at a glance
+Methodology companion: *Advanced Prototyping* (GDC 2006), summarized in `lectures.md` and
+`design-philosophy.md` §1.
+
+## 1. Lineage
 
 ```
-Simulation / tech probes                Gameplay syntheses              Stage prototypes
-------------------------                ------------------              ----------------
+Simulation / tech probes                 Gameplay syntheses              Stage prototypes
+------------------------                 ------------------              ----------------
 BIOME (programmable CA) ─┐
 WaterBoy (fluid on terrain) ─┼──► TidePool (fire-fighting mini game) ──► SPUG ──► GonzagoGL  (Creature stage)
 Crowd (flocking / SC4 sims) ─┘
-CellCulture (spread of life)                                             CityMaze          (Tribe/Civ stage)
-TextureBox (paint onto CA)                                               Space             (Space stage)
+CellCulture (spread of life)                                              CityMaze          (Tribe/Civ ancestor)
+TextureBox (paint onto CA)                                                Space             (Space stage)
 NetCity (evolving behavior)
 Gaslight (SSPSF star formation)
 ParticleMan (gravity N-body)
 ```
 
-Maxis' own description of TidePool: "our first steps down the path toward synthesizing our
-ideas into a playable game", combining pieces of BIOME, WaterBoy and Crowd, and setting the
-stage for SPUG and GonzagoGL. This is the pattern to copy: small single-system probes first,
-then deliberate syntheses of several probes into a playable loop.
+Maxis calls TidePool "our first steps down the path toward synthesizing our ideas into a
+playable game", built from pieces of BIOME, WaterBoy and Crowd, and the precursor to SPUG and
+GonzagoGL. Pattern: single-system probes, then deliberate syntheses into a playable loop.
 
-## 2. Prototype catalogue
-
-Each entry: what it is (paraphrased from Maxis), the underlying technique, and what it means
-for our evolution game.
+## 2. Catalogue
 
 ### BIOME — programmable cellular automata simulator
-- What: Lets users build simple "SimCity-like" grid simulations. Inspired by Conway's Life
-  (as SimCity itself was). Rules are written in a language based on **chemical
-  stoichiometry** (the notation for chemical reactions): cells change state the way chemicals
-  change when exposed to other chemicals. Cited applications: forest fires, disease
-  epidemics, animal migration, crystallization. Supports **rectangular and spiral** CA
-  grids; the spiral grid was used to study stochastic self-propagating star formation at
-  galactic scale.
-- Technique: Rule set = list of reactions `A + B -> C + D` with rates/probabilities, applied
-  per cell using neighbor counts as reagent concentrations.
-- For us: A data-driven CA engine with reaction-style rules is a cheap, general substrate for
-  biomes, climate, disease, vegetation spread, and even galactic structure. Build it once,
-  reuse it at every stage (see `evolution-game-playbook.md`).
+- Official description: users develop simple "SimCity-like" grid simulations. Inspired by
+  Conway's Life (as SimCity's grids were). Rules use a language based on **chemical
+  stoichiometry**; cells change state the way chemicals react. Applications named: forest
+  fires, disease epidemics, animal migration, crystallization. **Rectangular and spiral** grids;
+  spiral used for stochastic self-propagating star formation at galactic scale.
+- Technique: reaction rules `A + B -> C + D` with rates, neighbor counts as concentrations.
+- Chimerolog experiment: a rule-driven grid for **folklore hunting grounds** (where a creature
+  type spreads, where blight or plague moves through villages, how a forest recovers after a
+  hunt). One engine, many rule files owned by design.
 
 ### CellCulture — spread of life and culture over a planet
-- What: SimCity-like simulation of life and culture spreading across a planetary surface.
-  Planet is a **grid of cells**; each cell holds several variables describing the **amount
-  and kind of life** present. Life grows and spreads cell-to-cell based on those variables;
-  the more favorable the conditions, the faster growth and spread.
-- Technique: Multi-channel CA (per-cell vectors), growth rate as a function of local
-  suitability, diffusion to neighbors.
-- For us: Direct model for the macro view of evolution: populations of species as per-cell
-  densities, environment suitability driving growth, migration as diffusion, and culture as
-  a second layer spreading over the same grid.
+- Official description: SimCity-like simulation of life and culture spreading across a planet
+  represented as a **grid of cells**; each cell holds variables for the **amount and kind of
+  life**; growth and spread rates rise with favorable conditions.
+- Chimerolog experiment: regional **population and rumor model** for the Imperium of Rus map:
+  per-region densities of wild chimera stock, peasant population, and rumor/fear levels that
+  feed hunt contracts and clinic demand.
 
 ### TextureBox — painting onto a live cellular automaton
-- What: Applies paint-program brushes to dynamic CA systems like BIOME and CellCulture.
-  Brushes apply color to a canvas that then **propagates those colors using CA rules**.
-- Technique: User input as a source term into the CA; the CA does the "rendering".
-- For us: Pattern for terraforming/planet-painting tools and for designer tuning UIs: paint
-  initial conditions, watch the simulation take over. Also a good editor for creature skin
-  patterns if we ever do reaction-diffusion textures.
+- Official description: paint-program brushes applied to dynamic CA systems like BIOME and
+  CellCulture; brushes lay down color which the CA then **propagates by its rules**.
+- Chimerolog experiment: designer/GM brush tool for seeding scenario maps; potentially a
+  **hide/scale pattern generator** for spliced skins (reaction-diffusion driven by splice
+  parameters). Treat the visual use as optional and asynchronous to simulation.
 
 ### WaterBoy — fluid on uneven terrain (2002)
-- What: Fluid dynamics simulator for the behavior of large bodies of water on uneven terrain.
-  Also an early demo of then-modern GPU features: environment cube mapping and custom shaders.
-- Technique: Height-field / shallow-water style simulation over a terrain heightmap.
-- For us: Sea level, rivers and floods as a driver of biome change and speciation pressure;
-  the tide-pool setting for the cell stage.
+- Official description: fluid dynamics for large bodies of water on uneven terrain; also an
+  early showcase of environment cube mapping and custom shaders.
+- Chimerolog experiment: low priority. Rivers/marshes as hunt-terrain modifiers only if the
+  tactical map needs them.
 
 ### TidePool — first playable synthesis
-- What: Combines the **forest fire simulator from BIOME**, **terrain + water from WaterBoy**,
-  and the **flocking system from Crowd** into a fire-fighting mini game.
-- For us: Template for a "vertical slice" prototype: pick three proven subsystems and force
-  them into one loop with a win condition.
+- Official description: combines BIOME's **forest fire** sim, WaterBoy's **terrain + water**,
+  and Crowd's **flocking** into a fire-fighting mini game.
+- Chimerolog experiment: template for our first synthesis prototype: combine the anatomy
+  contract, one context-driven action, and the row-based combat resolver into one hunt
+  encounter before any art.
 
 ### Crowd — SimCity 4 prototype (agents + flocking)
-- What: Player controls a neighborhood of city blocks. Sims wander looking for residential,
-  commercial or industrial buildings to rest, work or recreate. Zoning gray blocks attracts
-  sims of that type. Zoned buildings emit traffic vehicles controllable with traffic lights.
-- Technique: Agent needs + attractors, flocking/steering, emitters.
-- For us: Herd/flock behavior for prey and predators in the creature stage; agent need
-  satisfaction loops for the tribal stage.
+- Official description: player controls city blocks; sims wander seeking residential,
+  commercial or industrial buildings to rest, work or recreate; zoning attracts sim types;
+  zoned buildings emit traffic controllable by lights.
+- Chimerolog experiment: **clinic flow**: patients and spliced creatures move between intake,
+  wards, splicing theatre and release; bottlenecks are visible as queues. Also herd behavior for
+  wild quarry during hunts.
 
 ### NetCity — evolution of complex behavior from simple components
-- What: Programmable simulator for the **evolution of complex behavior from simple
-  components**. User-defined nodes can emit signals and move, or shrink and grow when a
-  signal is received. Inspired by the **Soda Constructor** (sodaplay.com) and by
-  Braitenberg's **Vehicles: Experiments in Synthetic Psychology**.
-- Technique: Node-and-link "creatures" whose morphology *is* their controller: signal
-  propagation through links drives actuators (grow/shrink/move). Braitenberg vehicles show
-  how trivial sensor-motor wiring yields behavior that reads as fear, aggression, love.
-- For us: This is the most directly "evolution" prototype in the set. A body-as-controller
-  representation lets us apply mutation/selection to morphology and behavior together, which
-  is what an evolution game needs if creatures are to *earn* their traits rather than only be
-  painted with them.
+- Official description: programmable simulator of **complex behavior emerging from simple
+  components**; user-defined nodes emit signals and move, or shrink/grow on receiving a signal.
+  Inspired by the **Soda Constructor** and Braitenberg's **Vehicles**.
+- Technique: body-as-controller; signal propagation through links drives actuators.
+- Chimerolog experiment: the most relevant probe for **splicing consequences**. Give spliced
+  parts simple sensor/actuator wiring so a grafted organ changes behavior, not only stats. Small
+  Braitenberg-style rules produce readable temperaments (skittish, aggressive, clingy) that
+  design can name in folklore terms.
 
 ### Gaslight — stochastic self-propagating star formation (SSPSF)
-- What: Interstellar gas collapses under gravity into dense regions that become stars; new
-  stars heat surrounding material and push it away, creating new dense regions, which make
-  more stars, and so on.
-- Technique: Propagating-excitation CA (same family as forest fire / epidemic models),
-  often run on BIOME's spiral grid to get spiral-arm structure.
-- For us: Procedural galaxy generation for the space stage that produces spiral arms and star
-  clusters from a rule set rather than hand placement.
+- Official description: gas collapses into dense regions that ignite as stars; stars heat and
+  push surrounding material, seeding more stars, and so on.
+- Chimerolog experiment: not needed for the core game. Keep as a reference for any
+  propagating-excitation phenomenon (panic spreading through a village, curse contagion).
 
 ### ParticleMan — gravitational N-body sandbox
-- What: Simulates gravitational attraction between particles in a cloud. Used to study
-  orbits, nebula formation, star formation and particle streams from pulsars/black holes.
-  Elements include a **Particle Gun** and **Gravity Well** objects. Toggling
-  **particle-particle interactions** contrasts orderly independent particles with chaotic
-  interacting ones. A **fusion rate** parameter: high rates simulate star birth in collapsing
-  nebulae; low rates simulate interactions between stars in a galaxy.
-- Technique: N-body gravity with optional pairwise interaction and a merge ("fusion") rule.
-- For us: Space-stage visuals and a tuning example: a handful of physics sliders exposed to
-  designers produced a wide range of qualitatively different phenomena.
+- Official description: gravity between particles in a cloud; studied orbits, nebulae, star
+  formation and streams from pulsars/black holes. Objects: **Particle Gun**, **Gravity Well**.
+  Toggle **particle-particle interactions** to compare orderly vs chaotic regimes; a **fusion
+  rate** parameter spans nebula star birth (high) to galactic star interaction (low).
+- Chimerolog experiment: a tuning-UI pattern rather than a mechanic: a handful of exposed
+  sliders should let designers find qualitatively different regimes (calm ward vs. chaotic
+  outbreak) in our simulations.
 
 ### SPUG — tunable Creature-stage gameplay prototype
-- What: Player controls an avatar creature on a simple planetary terrain and may **hunt prey,
-  evade predators, eat, rest and level up stats**. **No limitations** on leveling or cheating
-  stats; designers impose limits themselves. Purpose: let designers **explore different
-  economies** for the creature game.
-- For us: The creature-stage economy should be prototyped as a pure numbers sandbox first
-  (hunger, energy, health, XP, predator danger), with every knob exposed and no guard rails,
-  before any art or animation is attached.
+- Official description: avatar creature on simple planetary terrain; **hunt prey, evade
+  predators, eat, rest, level up**; **no limits** on leveling or cheating stats; designers
+  self-impose limits to **explore economies**.
+- Chimerolog experiment: the **hunt-and-splice economy sandbox**: contracts, quarry danger,
+  harvested parts, splice costs, clinic income, reputation. No art, no animation, every knob
+  exposed, no guard rails. Answer "is the loop interesting on numbers alone?"
 
 ### GonzagoGL — the final Spore gameplay prototype
-- What: OpenGL prototype of the Creature game. Places the player in an environment with
-  **predators, prey, shelter and vegetation**. Advances SPUG with higher-quality terrain and
-  more emphasis on gameplay. "The final gameplay prototype developed for Spore."
-- For us: The second iteration after SPUG: keep the economy, add spatial gameplay (shelter,
-  vegetation, terrain), still before production art.
+- Official description: OpenGL Creature-game prototype with **predators, prey, shelter and
+  vegetation**; better terrain and more gameplay emphasis than SPUG; "the final gameplay
+  prototype developed for Spore."
+- Chimerolog experiment: the second iteration: keep SPUG-level economy, add the tactical row
+  grid with terrain/cover and creature abilities derived from anatomy.
 
 ### CityMaze — agent-based city (Tribe/Civ ancestor)
-- What: Player controls a city of sim creatures and places **residential, industrial,
-  entertainment and defense** buildings. Sims entering them **rest, produce income, improve
-  mood, or defend against raider attacks**. Happy, safe, rested sims multiply and produce
-  income; miserable, threatened, tired sims leave.
-- For us: Population dynamics as a function of needs satisfied is the same loop as
-  ecosystem carrying capacity; reuse the model between creature ecology and tribal cities.
+- Official description: player places **residential, industrial, entertainment and defense**
+  buildings; sims entering them **rest, produce income, improve mood, or defend against
+  raiders**; happy, safe, rested sims multiply and pay; miserable ones leave.
+- Chimerolog experiment: **clinic management loop** directly: rooms as buildings, staff and
+  patients as sims, raids as folklore incursions. Mood/safety/rest -> retention and income.
 
 ### Space — Space-stage prototype
-- What: Explore a galaxy with a spacecraft, discover worlds to **terraform and colonize**,
-  meet alien species to **fight or befriend**. Successful colonies yield resources and income
-  to invest in **technological research**; advanced tech improves terraforming, colonizing,
+- Official description: explore a galaxy, **terraform and colonize** worlds, **fight or
+  befriend** aliens; colonies fund **research** that unlocks better terraforming, colonizing,
   fighting and exploring.
-- For us: A 4X-lite loop; the terraforming tool should reuse the CA planet model
-  (CellCulture/BIOME) so that colonies and native life interact through one simulation.
+- Chimerolog experiment: structural reference for a **research/renown tree** funded by clinic
+  and hunt income, unlocking splice techniques and expedition range across the Imperium.
 
 ## 3. Patterns worth copying
 
-1. **One system per probe.** BIOME, WaterBoy, Crowd, ParticleMan each isolate a single
-   simulation and expose its parameters.
-2. **Programmable, data-driven cores.** BIOME (rule language), NetCity (user-defined nodes),
-   TextureBox (brushes as inputs) all put designers in control without recompiling; this is
-   the "data driving / interactive editor" tier of the Tower of Tuning.
-3. **Synthesis prototypes** (TidePool, SPUG, GonzagoGL) recombine proven probes into a loop
-   with goals and failure.
-4. **Economy before art.** SPUG had no limits and no polish; its only job was to let designers
-   feel out the creature economy.
-5. **Same math at multiple scales.** Propagating-excitation CA served forest fires, disease,
-   *and* galactic star formation. Look for these reuses in our own design.
-6. **Ship them.** Maxis released the prototypes publicly. Keeping an archive of runnable
-   prototypes is one of the "Advanced Prototyping" success metrics (how often is a prototype
-   referred back to?).
+1. One system per probe (BIOME, WaterBoy, Crowd, ParticleMan).
+2. Programmable, data-driven cores (BIOME rule language, NetCity nodes, TextureBox brushes):
+   designers in control without recompiling; the "interactive editor / data driving" tiers of
+   the Tower of Tuning.
+3. Synthesis prototypes (TidePool, SPUG, GonzagoGL) recombine proven probes into a loop with
+   goals and failure.
+4. Economy before art (SPUG had no limits and no polish).
+5. Same math at several scales (propagating-excitation CA for fire, disease, star formation).
+6. Archive and revisit: keep prototypes runnable; measure how often they are referred back to.
+
+## 4. Independent experiments proposed for Biomant Chimerolog
+
+Each is a one-question prototype at the lowest workable tuning tier. None is implemented;
+these are proposals to be scheduled against the phases in `chimerolog-implementation.md` §6.
+
+| Experiment | Question it answers | Inspired by | Success signal |
+| --- | --- | --- | --- |
+| **Anatomy Sandbox** | Can arbitrary chimera trees (mixed animal parts, 0-N limbs, 0-N mouths) be built, saved and reloaded through one contract with capability queries returning sane results? | Paper §1.2, §3.1 | 20 hand-made chimeras round-trip; every context query returns explicit zero/one/many; no bone-name lookups. |
+| **Reach Rig** | Does one generalized "reach target" action specialize convincingly across 5 radically different bodies? | Paper §3.2, Fig. 2-3 | Same keyed curve; all five touch the target in the same timing; rest pose unchanged when mode toggles. |
+| **Gait Bench** | Do leg groups + duty factor/step trigger give non-slipping walks for 1-8 legs of mixed length? | Paper §4.2 | Foot slip below tolerance; visible harmonized cadence across groups; crawl fallback for legless. |
+| **Splice Consequence** | Does grafting a part change legal actions and combat rows meaningfully without a stat sheet? | Hecker on "editor consequence"; NetCity | Each of 10 splices adds/removes at least one action or row option; players can predict outcomes from the body. |
+| **Hunt-Splice Economy (SPUG-style)** | Is the contract -> hunt -> harvest -> splice -> clinic income loop interesting on numbers alone? | SPUG | Designers find tension points with sliders only; at least two distinct viable strategies. |
+| **Clinic Flow (CityMaze/Crowd-style)** | Do room placement and staffing decisions produce legible queues, moods and revenue? | CityMaze, Crowd | Bottlenecks visible within 2 minutes of play; mood -> retention -> income chain readable. |
+| **Folklore Spread (BIOME/CellCulture-style)** | Can a rule file drive rumor, fear and quarry population on the region map to generate contracts? | BIOME, CellCulture, TextureBox | Region states diverge from identical starts under different rule files; contracts emerge without scripting. |
+| **Interrupt & Outro** | When a combat action is cancelled mid-execution, does the creature land in a valid pose and state? | AIIDE 2010 "Outro Problem" | No pops; goals hand off cleanly; state and animation agree after interruption. |

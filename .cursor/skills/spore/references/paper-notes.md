@@ -1,12 +1,27 @@
-# Spore's Procedural Creature Animation System
+# Paper Engineering Notes: Spore's Procedural Creature Animation System
+
+Engineering distillation of the SIGGRAPH 2008 paper, organized by subsystem. Every statement
+in sections 0-4 is a **source finding** unless marked "for our project" (proposed adaptation).
+When exact wording, equations or figures matter, open the supplied paper at
+`paper/Sporeanim-siggraph08.pdf` or search `paper/full-text.md` (page-indexed). The mapping
+between paper sections and these notes:
+
+| Paper | Notes here |
+| --- | --- |
+| §1 Introduction, §1.2 Character Terminology | §0, §1 |
+| §3 Animation Authoring (3.1 Selecting, 3.2 Posing, 3.3 Keying, 3.4 Preview) | §2 |
+| §4.1 Binding (Branching, Variants), §4.2 Gaits, §4.4 Jiggles | §3 |
+| §4.3 Particle IK Solver | `particle-ik-solver.md` |
+| §5 Results and Discussion | §4 |
 
 Sources:
 - Hecker, Raabe, Enslow, DeWeese, Maynard, van Prooijen. *Real-time Motion Retargeting to
   Highly Varied User-Created Morphologies.* Proceedings of ACM SIGGRAPH 2008 (11 pages).
-  [Paper PDF](https://www.chrishecker.com/images/c/cb/Sporeanim-siggraph08.pdf) ·
+  Local copy: `paper/Sporeanim-siggraph08.pdf` ·
+  [Original PDF](https://www.chrishecker.com/images/c/cb/Sporeanim-siggraph08.pdf) ·
   [Project page](https://www.chrishecker.com/Real-time_Motion_Retargeting_to_Highly_Varied_User-Created_Morphologies)
-  (page also links two rough FRAPS videos: one of generalization/specialization across
-  creatures, one of the Jiggles and gait systems).
+  (page also links two rough FRAPS videos, not acquired: one of generalization/specialization
+  across creatures, one of the Jiggles and gait systems).
 - Hecker, *How To Animate a Character You've Never Seen Before*, GDC 2007
   ([page](https://www.chrishecker.com/How_To_Animate_a_Character_You%27ve_Never_Seen_Before);
   slides + mp3; the talk leaned on live demos in the Spasm tool).
@@ -80,7 +95,8 @@ preview on many creatures at once            + synthesized locomotion (gaits)
   "reasonable" (not hyper-extended or balled up). In practice players do this, and sometimes
   fix the rest pose after seeing the creature animate.
 
-Data model sketch for our project:
+Data model sketch for our project (proposed adaptation; the Chimerolog contract built on it is
+in `chimerolog-implementation.md` §2):
 
 ```ts
 type Cap = 'root' | 'spine' | 'grasper' | 'mouth' | 'foot' | 'eye' | 'limb' | string;
@@ -322,3 +338,16 @@ structure/style decomposition: contexts, movement modes, caps, variants and the 
 the **structure** the computer reasons about; the keyed `q_g` curves, gait arcs and style
 tables are the **style** animators own. Keep that split clean in our implementation: no
 hard-coded aesthetic decisions in the solver, no topology assumptions in the authored data.
+
+## 6. What the paper does not provide
+
+Do not attribute these to the paper; they are our implementation choices if we build them:
+
+- Mesh generation, skinning, UVs, or texturing for player-built bodies (the paper cites
+  Willmott et al. 2007 "Rigblocks" for deformable parts but does not describe it).
+- A genetics, splicing or evolution simulation; "DNA" is not a concept in the paper.
+- Ecosystem, combat or clinic gameplay logic; the paper only notes that gameplay code reuses
+  context queries for AI reasoning and inventory.
+- Spore's actual source code, tool source (Spasm), or data formats.
+- Intra-character collision, volume awareness, or anticipation in gaits (listed as
+  limitations/future work).
