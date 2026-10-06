@@ -1,5 +1,8 @@
 # Vibe Raid — Hugging Face game
 
+> **Portfolio status:** P3 — **80% release-ready** toward a polished small browser game/demo.  
+> Remaining work is testing, first-run model UX, error/offline states, scoring balance, mobile performance and deployment. See [PROJECT_STATUS.md](./PROJECT_STATUS.md).
+
 Browser raid game powered by **Transformers.js** and a Hugging Face emotion model. Type lines that match the target vibe; the model scores you entirely in-browser.
 
 ## Quick start
