@@ -1,5 +1,6 @@
 import './env.js';
 import http from 'node:http';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
@@ -11,6 +12,7 @@ import { toMarkdown } from './export.js';
 import { createStore } from './store.js';
 
 const PORT = Number(process.env.PORT) || 3000;
+const HOST = process.env.HOST || '0.0.0.0'; // all interfaces so phones on the LAN can connect
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
@@ -283,9 +285,20 @@ function shutdown(signal) {
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 
-server.listen(PORT, () => {
+function lanAddresses() {
+  return Object.values(os.networkInterfaces())
+    .flat()
+    .filter((i) => i && i.family === 'IPv4' && !i.internal)
+    .map((i) => i.address);
+}
+
+server.listen(PORT, HOST, () => {
   const configured = listProviders().filter((p) => p.configured).map((p) => p.id);
   console.log(`AI Chat Room listening on http://localhost:${PORT}`);
+  const lan = lanAddresses();
+  if (lan.length && HOST !== '127.0.0.1' && HOST !== 'localhost') {
+    console.log(`On your phone (same Wi-Fi): ${lan.map((ip) => `http://${ip}:${PORT}`).join('  or  ')}`);
+  }
   console.log(`Providers ready: ${configured.join(', ')}`);
   console.log(
     store ? `Persistence: ${restored ? `restored ${restored} room(s) from` : 'saving to'} ${store.file}` : 'Persistence: disabled (PERSIST=0)',

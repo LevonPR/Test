@@ -1,0 +1,39 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.aichatroom.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.aichatroom.app'
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName '0.1.0'
+        // Pre-filled in the "server address" dialog. Override at build time with
+        //   ./gradlew assembleDebug -PserverUrl=http://192.168.1.20:3000
+        buildConfigField 'String', 'DEFAULT_SERVER_URL', "\"${project.findProperty('serverUrl') ?: 'http://192.168.1.100:3000'}\""
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix '.debug'
+        }
+        release {
+            minifyEnabled false
+            // Signed with the debug key so the APK is installable straight from CI.
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
