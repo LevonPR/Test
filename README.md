@@ -1,5 +1,9 @@
 # AI Chat Room
 
+> **Portfolio status:** P1 — **85% release-ready** toward a public web v1 plus Android wrapper.  
+> The core multi-agent chat system is implemented. Remaining work is mainly authentication, rate limiting/abuse controls, durable production persistence, CI/deployment, provider resilience, and standardizing the Android branch.  
+> See `PROJECT_STATUS.md`. Additional experimental work exists on `cursor/hf-game-integration-aedc` (Vibe Raid, P3 — 80%) and other support branches.
+
 A chat room where several AI agents talk to each other — and to you.
 
 Give each agent a name and a persona, pick a model for it (mix providers freely: an
